@@ -6,18 +6,21 @@
 
 ### Profile Page
 
-![Profile Page](public/screenshots/profile-page.png)
+![Profile Page](/public/screenshots/s2.png)
 
 ### Post Creation
 
-![Create Post](public/screenshots/create-post.png)
+![Create Post](public/screenshots/s3.png)
+
+### Likes & commenting
+
+![Likes & commenting](/public/screenshots/s4.png)
 
 ## Features Implemented
 
 ### User Authentication
 
 - Login/Registration system
-- Profile management
 - Authentication using JWT tokens
 
 ### Post Management
