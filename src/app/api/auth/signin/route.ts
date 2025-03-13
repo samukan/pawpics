@@ -2,14 +2,24 @@ import {NextResponse} from 'next/server';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import {db} from '@/lib/db';
+import {RowDataPacket} from 'mysql2';
+
+interface UserRow extends RowDataPacket {
+  id: number;
+  email: string;
+  username: string;
+  name?: string;
+  image?: string;
+  password: string;
+}
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
     const {email, password} = body;
 
-    // Check if the input is email or username
-    const [users] = await db.query(
+    // Käytetään yksittäisen rivin tyyppiä generics-parametrina
+    const [users] = await db.query<UserRow>(
       'SELECT * FROM users WHERE email = ? OR username = ?',
       [email, email]
     );
@@ -21,9 +31,9 @@ export async function POST(req: Request) {
       );
     }
 
-    const user = users[0] as any;
+    const user = users[0]; // Käytetään taulukon ensimmäistä riviä
 
-    // Compare password
+    // Verrataan salasanaa
     const passwordMatch = await bcrypt.compare(password, user.password);
 
     if (!passwordMatch) {
@@ -33,7 +43,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Generate JWT token
+    // Luodaan JWT-token
     const token = jwt.sign(
       {userId: user.id, email: user.email},
       process.env.JWT_SECRET || 'fallback_secret',

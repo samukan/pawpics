@@ -31,10 +31,14 @@ export async function GET(req: Request, context: {params: {id: string}}) {
       success: true,
       comments: comments || [],
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('GET COMMENTS ERROR:', error);
     return NextResponse.json(
-      {success: false, error: 'Internal Server Error'},
+      {
+        success: false,
+        error:
+          error instanceof Error ? error.message : 'An unknown error occurred',
+      },
       {status: 500}
     );
   }
@@ -93,7 +97,7 @@ export async function POST(req: Request, context: {params: {id: string}}) {
         [postId, userId, content.trim()]
       );
 
-      const commentId = (result as any).insertId;
+      const commentId = (result as {insertId: number}).insertId;
 
       // Update comment count in the post
       await connection.query(
@@ -125,16 +129,30 @@ export async function POST(req: Request, context: {params: {id: string}}) {
         success: true,
         comment: comments[0],
       });
-    } catch (error) {
+    } catch (error: unknown) {
       await connection.rollback();
-      throw error;
+      console.error('Error submitting comment:', error);
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            error instanceof Error
+              ? error.message
+              : 'An unknown error occurred',
+        },
+        {status: 500}
+      );
     } finally {
       connection.release();
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('ADD COMMENT ERROR:', error);
     return NextResponse.json(
-      {success: false, error: 'Internal Server Error'},
+      {
+        success: false,
+        error:
+          error instanceof Error ? error.message : 'An unknown error occurred',
+      },
       {status: 500}
     );
   }

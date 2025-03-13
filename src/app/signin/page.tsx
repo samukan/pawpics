@@ -98,9 +98,9 @@ export default function SignInPage() {
               {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
             <p className="text-center text-sm">
-              Don't have an account?{' '}
-              <Link href="/signup" className="text-primary hover:underline">
-                Sign Up
+              Don&apos;t have an account?{' '}
+              <Link href="/signup" className="text-blue-500 hover:underline">
+                Sign up
               </Link>
             </p>
           </CardFooter>

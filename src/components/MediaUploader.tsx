@@ -1,17 +1,22 @@
 'use client';
 
-import {useState, useEffect} from 'react';
+import {useState} from 'react';
 import {Button} from '@/components/ui/button';
 import {UploadButton} from '@/lib/uploadthing';
 import {X, FileImage, Loader2} from 'lucide-react';
 import {toast} from 'react-hot-toast';
 import Image from 'next/image';
 import {useAuth} from '@/components/AuthProvider';
+import {
+  FileUploadResponse,
+  FileUploadError,
+  UploadReadyState,
+} from '../types/ApiResponse';
 
 interface MediaUploaderProps {
-  onMediaUploaded: (url: string, type: string) => void;
-  mediaUrl: string | null;
-  onClear: () => void;
+  onMediaUploaded: (url: string) => void;
+  mediaUrl?: string;
+  onClear?: () => void;
 }
 
 export default function MediaUploader({
@@ -51,7 +56,7 @@ export default function MediaUploader({
                 fill
                 sizes="(max-width: 768px) 100vw, 500px"
                 className="object-contain"
-                unoptimized={true} // Always use unoptimized for uploaded media
+                unoptimized={true}
               />
             </div>
           )}
@@ -73,19 +78,19 @@ export default function MediaUploader({
             </div>
           ) : (
             <div className="w-full">
-              <UploadButton
+              <UploadButton<FileUploadResponse>
                 key={key}
                 endpoint="mediaUploader"
-                onClientUploadComplete={(res) => {
+                onClientUploadComplete={(res: FileUploadResponse[]) => {
                   setIsUploading(false);
                   if (res && res.length > 0) {
                     const file = res[0];
-                    onMediaUploaded(file.ufsUrl, file.type);
+                    onMediaUploaded(file.url, file.type || '');
                     toast.success('Upload complete');
                     setKey(Date.now());
                   }
                 }}
-                onUploadError={(error) => {
+                onUploadError={(error: FileUploadError) => {
                   setIsUploading(false);
                   toast.error(`Error: ${error.message}`);
                   setKey(Date.now());
@@ -93,10 +98,10 @@ export default function MediaUploader({
                 onUploadBegin={() => {
                   setIsUploading(true);
                 }}
-                className="ut-button:bg-primary ut-button:ut-readying:bg-primary/80 ut-button:ut-uploading:bg-primary/80 ut-button:w-full ut-allowed-content:hidden"
+                className="ut-button:bg-blue-500 ut-button:hover:bg-blue-600"
                 headers={getAuthHeader}
                 content={{
-                  button({ready}) {
+                  button({ready}: UploadReadyState) {
                     if (ready) {
                       return (
                         <div className="flex items-center justify-center space-x-2">

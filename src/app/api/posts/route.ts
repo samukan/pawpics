@@ -1,7 +1,8 @@
 import {NextResponse} from 'next/server';
-import {getUserIdFromToken} from '@/lib/server/db-access';
 import {db} from '@/lib/db';
-import {PostWithExtras} from '@/types';
+import {getUserIdFromToken} from '@/lib/server/db-access';
+
+import {ResultSetHeader} from 'mysql2';
 
 export async function GET(req: Request) {
   try {
@@ -30,7 +31,7 @@ export async function GET(req: Request) {
     const feedType = url.searchParams.get('feed') || 'global';
 
     let query: string;
-    let queryParams: any[] = [];
+    let queryParams: (string | number)[] = [];
 
     if (feedType === 'following') {
       // Fetch posts from users that the current user follows
@@ -64,10 +65,11 @@ export async function GET(req: Request) {
     const [rows] = await db.query(query, queryParams);
 
     return NextResponse.json(rows);
-  } catch (error) {
-    console.error('GET POSTS ERROR:', error);
+  } catch (error: unknown) {
+    // Replace any with unknown
+    console.error('Error fetching posts:', error);
     return NextResponse.json(
-      {success: false, error: 'Internal Server Error'},
+      {success: false, error: 'Failed to fetch posts'},
       {status: 500}
     );
   }
@@ -112,7 +114,7 @@ export async function POST(req: Request) {
       [userId, content || null, image || null, video || null]
     );
 
-    const insertId = (result as any).insertId;
+    const insertId = (result as ResultSetHeader).insertId;
 
     // Get the newly created post
     const [posts] = await db.query(
@@ -131,10 +133,15 @@ export async function POST(req: Request) {
       success: true,
       post: posts[0],
     });
-  } catch (error) {
-    console.error('CREATE POST ERROR:', error);
+  } catch (error: unknown) {
+    // Replace any with unknown
+    console.error('Error creating post:', error);
     return NextResponse.json(
-      {success: false, error: 'Internal Server Error'},
+      {
+        success: false,
+        error:
+          error instanceof Error ? error.message : 'An unknown error occurred',
+      },
       {status: 500}
     );
   }

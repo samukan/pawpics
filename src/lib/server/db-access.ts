@@ -1,4 +1,3 @@
-import {db} from '@/lib/db';
 import jwt from 'jsonwebtoken';
 
 // For server-side use only

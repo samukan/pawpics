@@ -4,7 +4,7 @@ import {useState} from 'react';
 import {Card, CardContent} from './ui/card';
 import {Avatar, AvatarImage} from './ui/avatar';
 import {Textarea} from './ui/textarea';
-import {Loader2Icon, SendIcon, ImageIcon, VideoIcon, X} from 'lucide-react';
+import {Loader2Icon, SendIcon, ImageIcon, X} from 'lucide-react';
 import {Button} from './ui/button';
 import toast from 'react-hot-toast';
 import {useAuth} from '@/components/AuthProvider';

@@ -1,6 +1,7 @@
 import {NextResponse} from 'next/server';
 import bcrypt from 'bcrypt';
 import {db} from '@/lib/db';
+import type {User} from '@/types/DBTypes';
 
 export async function POST(req: Request) {
   try {
@@ -8,35 +9,35 @@ export async function POST(req: Request) {
     const {email, username, password, name} = body;
 
     // Check if email or username already exists
-    const [existingUsers] = await db.query(
+    const [existingUsers] = await db.query<User>(
       'SELECT * FROM users WHERE email = ? OR username = ?',
       [email, username]
     );
 
     if (
       Array.isArray(existingUsers) &&
-      existingUsers.some((user: any) => user.email === email)
+      existingUsers.some((user) => user.email === email)
     ) {
       return new NextResponse('Email already in use', {status: 400});
     }
 
     if (
       Array.isArray(existingUsers) &&
-      existingUsers.some((user: any) => user.username === username)
+      existingUsers.some((user) => user.username === username)
     ) {
       return new NextResponse('Username already taken', {status: 400});
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Create the user
-    const [result] = await db.query(
+    // Create the user (no need to capture the result)
+    await db.query(
       'INSERT INTO users (email, username, password, name) VALUES (?, ?, ?, ?)',
       [email, username, hashedPassword, name]
     );
 
     // Fetch the newly created user
-    const [newUsers] = await db.query(
+    const [newUsers] = await db.query<User>(
       'SELECT id, email, username, name FROM users WHERE email = ?',
       [email]
     );

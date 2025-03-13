@@ -4,7 +4,7 @@ export interface User {
   username: string;
   name?: string;
   image?: string;
-  token?: string; // For client-side auth state
+  token?: string;
 }
 
 export interface FullUser extends User {

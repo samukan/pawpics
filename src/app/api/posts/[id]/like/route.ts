@@ -87,7 +87,7 @@ export async function POST(req: Request, context: {params: {id: string}}) {
       return NextResponse.json({
         success: true,
         liked: liked,
-        likesCount: post ? (post as any).likesCount : 0,
+        likesCount: post ? (post as {likesCount: number}).likesCount : 0,
       });
     } catch (error) {
       await connection.rollback();
@@ -95,10 +95,15 @@ export async function POST(req: Request, context: {params: {id: string}}) {
     } finally {
       connection.release();
     }
-  } catch (error) {
-    console.error('TOGGLE LIKE ERROR:', error);
+  } catch (error: unknown) {
+    // Replace any with unknown
+    console.error('Error handling like:', error);
     return NextResponse.json(
-      {success: false, error: 'Internal Server Error'},
+      {
+        success: false,
+        error:
+          error instanceof Error ? error.message : 'An unknown error occurred',
+      },
       {status: 500}
     );
   }

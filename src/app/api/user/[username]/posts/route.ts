@@ -1,7 +1,23 @@
 import {NextResponse} from 'next/server';
 import {getUserIdFromToken} from '@/lib/server/db-access';
 import {db} from '@/lib/db';
-import {PostWithExtras} from '@/types/DBTypes';
+import {RowDataPacket} from 'mysql2';
+
+// Define a type that extends RowDataPacket for posts
+interface PostRow extends RowDataPacket {
+  id: number;
+  content?: string;
+  image?: string;
+  video?: string;
+  authorId: number;
+  createdAt: string;
+  updatedAt: string;
+  likesCount: number;
+  commentsCount: number;
+  authorUsername: string;
+  authorName?: string;
+  authorImage?: string;
+}
 
 export async function GET(req: Request, context: {params: {username: string}}) {
   try {
@@ -29,7 +45,7 @@ export async function GET(req: Request, context: {params: {username: string}}) {
     }
 
     // Fetch user's posts
-    const result = await db.query<PostWithExtras[]>(
+    const [rows] = await db.query<PostRow[]>(
       `SELECT 
         p.id, p.content, p.image, p.video, p.authorId, p.createdAt, p.updatedAt,
         p.likesCount, p.commentsCount,
@@ -41,9 +57,7 @@ export async function GET(req: Request, context: {params: {username: string}}) {
       [username]
     );
 
-    const posts = result[0];
-
-    return NextResponse.json(posts);
+    return NextResponse.json(rows);
   } catch (error) {
     console.error('GET USER POSTS ERROR:', error);
     return NextResponse.json(

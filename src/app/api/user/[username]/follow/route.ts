@@ -1,7 +1,13 @@
 import {NextResponse} from 'next/server';
 import {getUserIdFromToken} from '@/lib/server/db-access';
 import {db} from '@/lib/db';
-import {User, Follow, CountResult} from '@/types/DBTypes';
+import {User, Follow} from '@/types/DBTypes';
+import {RowDataPacket} from 'mysql2';
+
+// Modify CountResult to satisfy QueryResult
+interface CountResultRow extends RowDataPacket {
+  count: number;
+}
 
 export async function POST(
   req: Request,
@@ -81,16 +87,14 @@ export async function POST(
       }
 
       // Get updated follower counts
-      const [followerCounts] = await connection.query<CountResult>(
-        'SELECT COUNT(*) as followers FROM follows WHERE followingId = ?',
+      const [followerCounts] = await connection.query<CountResultRow[]>(
+        'SELECT COUNT(*) as count FROM follows WHERE followingId = ?',
         [followingId]
       );
 
       // Safely extract the follower count
       const followerCount =
-        followerCounts.length > 0
-          ? Number(followerCounts[0].followers) || 0
-          : 0;
+        followerCounts.length > 0 ? Number(followerCounts[0].count) || 0 : 0;
 
       await connection.commit();
 
@@ -162,13 +166,13 @@ export async function GET(req: Request, context: {params: {username: string}}) {
     const isFollowing = follows.length > 0;
 
     // Get follower count
-    const [followerCounts] = await db.query<CountResult>(
-      'SELECT COUNT(*) as followers FROM follows WHERE followingId = ?',
+    const [followerCounts] = await db.query<CountResultRow>(
+      'SELECT COUNT(*) as count FROM follows WHERE followingId = ?',
       [followingId]
     );
 
     const followerCount =
-      followerCounts.length > 0 ? Number(followerCounts[0].followers) || 0 : 0;
+      followerCounts.length > 0 ? Number(followerCounts[0].count) || 0 : 0;
 
     return NextResponse.json({
       success: true,
