@@ -1,6 +1,12 @@
 'use client';
 
-import {Dialog, DialogContent} from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+  DialogHeader,
+} from '@/components/ui/dialog';
 import Image from 'next/image';
 import {useState} from 'react';
 
@@ -18,6 +24,11 @@ export function ImageModal({isOpen, onClose, imageUrl, alt}: ImageModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[90vw] md:max-w-[80vw] lg:max-w-[70vw] xl:max-w-[60vw] p-0 bg-transparent border-none">
+        <DialogHeader className="sr-only">
+          <DialogTitle>Image Preview</DialogTitle>
+          <DialogDescription>Enlarged view of {alt}</DialogDescription>
+        </DialogHeader>
+
         <div className="relative w-full bg-transparent">
           {!isLoaded && (
             <div className="absolute inset-0 flex items-center justify-center">

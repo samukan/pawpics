@@ -12,6 +12,14 @@ import {
   FileUploadError,
   UploadReadyState,
 } from '../types/ApiResponse';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface MediaUploaderProps {
   onMediaUploaded: (url: string) => void;
@@ -27,6 +35,7 @@ export default function MediaUploader({
   const {token} = useAuth();
   const [isUploading, setIsUploading] = useState(false);
   const [key, setKey] = useState(Date.now());
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   // Determine if the media is a video based on its extension or URL structure
   const isVideo = mediaUrl
@@ -36,6 +45,17 @@ export default function MediaUploader({
   // Get auth header on each render to ensure it's fresh
   const getAuthHeader = () => {
     return {Authorization: `Bearer ${token}`};
+  };
+
+  const handleClearRequest = () => {
+    setDialogOpen(true);
+  };
+
+  const handleConfirmClear = () => {
+    setDialogOpen(false);
+    if (onClear) {
+      onClear();
+    }
   };
 
   return (
@@ -64,7 +84,7 @@ export default function MediaUploader({
             variant="destructive"
             size="icon"
             className="absolute top-2 right-2 h-8 w-8 rounded-full z-10"
-            onClick={onClear}
+            onClick={handleClearRequest}
           >
             <X className="h-4 w-4" />
           </Button>
@@ -123,6 +143,27 @@ export default function MediaUploader({
           )}
         </div>
       )}
+
+      {/* Confirmation Dialog with proper accessibility */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remove Media</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to remove this media? This action cannot be
+              undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmClear}>
+              Remove
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
