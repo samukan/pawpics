@@ -27,7 +27,7 @@ function CreatePost({onPostCreated}: CreatePostProps) {
   const handleMediaUploaded = (ufsUrl: string, type: string) => {
     setMediaUrl(ufsUrl);
     setMediaType(type.includes('image') ? 'image' : 'video');
-    setShowMediaUploader(false); // Hide the uploader after successful upload
+    setShowMediaUploader(false);
   };
 
   const clearMedia = () => {
@@ -106,7 +106,7 @@ function CreatePost({onPostCreated}: CreatePostProps) {
             <div className="flex-1 space-y-4">
               {/* Text input always visible */}
               <Textarea
-                placeholder="What's on your mind?"
+                placeholder="What are we posting today?"
                 className="min-h-[100px] resize-none focus-visible:ring-1"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
@@ -130,7 +130,7 @@ function CreatePost({onPostCreated}: CreatePostProps) {
                         fill
                         sizes="(max-width: 768px) 100vw, 500px"
                         className="object-contain"
-                        unoptimized={mediaUrl.includes('utfs.io')} // Add unoptimized prop for uploadthing images
+                        unoptimized={mediaUrl.includes('utfs.io')}
                       />
                     </div>
                   )}

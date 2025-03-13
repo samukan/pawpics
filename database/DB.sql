@@ -77,7 +77,7 @@ CREATE TABLE follows (
         REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Notifications-taulu
+-- Notifications-taulu (Ei käytössä)
 CREATE TABLE notifications (
     id INT AUTO_INCREMENT PRIMARY KEY,
     userId INT NOT NULL,
