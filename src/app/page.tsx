@@ -1,101 +1,173 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import {useState, useEffect, useCallback} from 'react';
+import {useAuth} from '@/components/AuthProvider';
+import PostCard from '@/components/PostCard';
+import CreatePost from '@/components/CreatePost';
+import {PostWithExtras} from '@/types';
+import {Tabs, TabsList, TabsTrigger} from '@/components/ui/tabs';
+import {Button} from '@/components/ui/button';
+import {RefreshCw} from 'lucide-react';
+
+export default function HomePage() {
+  const {user, token} = useAuth();
+  const [posts, setPosts] = useState<PostWithExtras[]>([]);
+  const [dbUserId, setDbUserId] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<string>('global');
+  const [loading, setLoading] = useState(false);
+
+  // Reset state when token changes
+  useEffect(() => {
+    if (!token) {
+      setPosts([]);
+      setDbUserId(null);
+    }
+  }, [token]);
+
+  // Fetch posts based on the selected feed
+  const fetchPosts = useCallback(
+    async (feedType = activeTab) => {
+      if (!token) return;
+
+      setLoading(true);
+      try {
+        const response = await fetch(`/api/posts?feed=${feedType}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setPosts(data);
+        }
+      } catch (error) {
+        console.error('Error fetching posts:', error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [token, activeTab]
+  );
+
+  const fetchDbUserId = useCallback(async () => {
+    if (!user || !token) return;
+
+    try {
+      const response = await fetch('/api/user', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setDbUserId(data.user.id);
+      }
+    } catch (error) {
+      console.error('Error fetching user ID:', error);
+    }
+  }, [user, token]);
+
+  // Fetch initial data
+  useEffect(() => {
+    if (token) {
+      fetchPosts();
+      fetchDbUserId();
+    }
+  }, [token, fetchPosts, fetchDbUserId]);
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    fetchPosts(value);
+  };
+
+  const addNewPost = (newPost: PostWithExtras) => {
+    setPosts((prevPosts) => [newPost, ...prevPosts]);
+  };
+
+  const handlePostDeleted = (postId: number) => {
+    setPosts((prevPosts) => prevPosts.filter((post) => post.id !== postId));
+  };
+
+  const handleRefresh = () => {
+    fetchPosts(activeTab);
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <div className="max-w-4xl mx-auto p-4 space-y-6">
+      <CreatePost onPostCreated={addNewPost} />
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      <div className="flex items-center justify-between">
+        <Tabs
+          value={activeTab}
+          onValueChange={handleTabChange}
+          className="w-full"
+        >
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="global">Global</TabsTrigger>
+            <TabsTrigger value="following">Following</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          className="ml-2"
+          onClick={handleRefresh}
+          disabled={loading}
+        >
+          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+        </Button>
+      </div>
+
+      {loading && posts.length === 0 ? (
+        <div className="space-y-6">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="border border-gray-200 dark:border-gray-800 rounded-lg p-4 space-y-4"
+            >
+              <div className="flex items-center space-x-4">
+                <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-800 animate-pulse"></div>
+                <div className="space-y-2">
+                  <div className="h-4 w-32 bg-gray-200 dark:bg-gray-800 animate-pulse rounded"></div>
+                  <div className="h-3 w-24 bg-gray-200 dark:bg-gray-800 animate-pulse rounded"></div>
+                </div>
+              </div>
+              <div className="h-24 w-full bg-gray-200 dark:bg-gray-800 animate-pulse rounded"></div>
+            </div>
+          ))}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      ) : posts.length > 0 ? (
+        <div className="space-y-6">
+          {posts.map((post) => (
+            <PostCard
+              key={post.id}
+              post={post}
+              dbUserId={dbUserId}
+              onPostDeleted={handlePostDeleted}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-10 border border-dashed rounded-lg">
+          {activeTab === 'following' ? (
+            <>
+              <p className="text-muted-foreground">
+                No posts from people you follow yet.
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Follow some users or switch to the global feed to see posts.
+              </p>
+            </>
+          ) : (
+            <p className="text-muted-foreground">
+              No posts available. Be the first to post!
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
